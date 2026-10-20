@@ -4,29 +4,26 @@ import { getJson } from '../api/client.js';
 type Props<T> = {
   title: string;
   description: string;
-  path: string;
-  resourceKey: string;
+  loadItems: () => Promise<T[]>;
   emptyMessage: string;
   renderItems: (items: T[]) => ReactNode;
 };
 
-export function CapabilityCard<T>({ title, description, path, resourceKey, emptyMessage, renderItems }: Props<T>) {
+export function CapabilityCard<T>({ title, description, loadItems, emptyMessage, renderItems }: Props<T>) {
   const [items, setItems] = useState<T[] | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    getJson<Record<string, T[]>>(path)
-      .then((response) => {
-        const result = response[resourceKey];
-        if (!Array.isArray(result)) throw new Error(`Missing ${resourceKey} response data`);
+    loadItems()
+      .then((result) => {
         if (!cancelled) setItems(result);
       })
       .catch(() => {
         if (!cancelled) setError(true);
       });
     return () => { cancelled = true; };
-  }, [path, resourceKey]);
+  }, [loadItems]);
 
   return <section className="card h-100"><div className="card-body">
     <h2 className="h4">{title}</h2>
